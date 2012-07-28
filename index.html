@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Will it rain?</title>
+        <meta charset='UTF-8' />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+
+        <link rel="shortcut icon" href="favicon.png" type="image/png" />
+        <link rel="icon" href="favicon.png" type="image/png" />
+        <link rel="apple-touch-icon" href="favicon.png" />
+
+        <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Open+Sans+Condensed:300,700,300italic|Open+Sans:300italic,400,300,800" />
+
+        <link rel="stylesheet" href="style/style.css">
+        <script type="text/javascript">
+        var addToHomeConfig = {
+          animationIn: 'bubble',
+          animationOut: 'drop',
+          lifespan:10000,
+          expire:2,
+          touchIcon:true
+        };
+        </script>
+        <script type="application/javascript" src="code/add2home.js"></script>
+
+       <div id="menu" class="fbox">
+          <a href="mailto:ecsspert@gmail.com?subject=[Rain]:" class="link">Contact</a>
+          <a id="refresh" href="#" class="link">Refresh</a>
+       </div>
+       
+        <script src='prefixfree.min.js'></script>
+        <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+    </head>
+    <body>
+      <div id="forecast">
+        <div id="body">
+          <h2 class="forecast"></h2>
+          <div class="more-info">There will be <span class='forecast'></span> in Amsterdam for the next two hours.</div>
+        </div>
+        <div id="footer" class="fbox">
+          <div class="card"><div class="inner"><h2 class="title"></h2><div class="time">Next 30 minutes</div></div></div>
+          <div class="card"><div class="inner"><h2 class="title"></h2><div class="time">After 30 minutes</div></div></div>
+          <div class="card"><div class="inner"><h2 class="title"></h2><div class="time">After 1 hour</div></div></div>
+          <div class="card"><div class="inner"><h2 class="title"></h2><div class="time">After 1:30 hours</div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="raw" style="display: none"></div>       
+    <div id="msg"></div>
+
+    <script>
+        $(function() {
+            
+            function doAjax(url,msg,container){
+            // if the URL starts with http
+            if(url.match('^http')){
+              // assemble the YQL call
+              msg.removeClass('error');
+              msg.html(' (loading...)');
+              $.getJSON("http://query.yahooapis.com/v1/public/yql?"+
+                        "q=select%20*%20from%20html%20where%20url%3D%22"+
+                        encodeURIComponent(url)+
+                        "%22&format=xml'&callback=?",
+                function(data){
+                  if(data.results[0]){
+                    var data = filterData(data.results[0]);
+                    msg.html(' (ready.)');
+                    container.
+                      html(data);
+                    beaufity(container);
+
+
+                  } else {
+                    msg.html(' (error!)');
+                    msg.addClass('error');
+                    var errormsg = '<p>Error: could not load the page.</p>';
+                    container.
+                      html(errormsg);
+                  }
+                }
+              );
+            } else {
+              $.ajax({
+                url: url,
+                timeout: 5000,
+                success: function(data){
+                  msg.html(' (ready.)');
+                  container.
+                    html(data);
+                  beaufity(container);
+                },
+                error: function(req,error){
+                  msg.html(' (error!)');
+                  msg.addClass('error');
+                  if(error === 'error'){error = req.statusText;}
+                  var errormsg = 'There was a communication error: '+error;
+                    container.
+                      html(errormsg);
+                },
+                beforeSend: function(data){
+                  msg.removeClass('error');
+                  msg.html(' (loading...)');
+                }
+              });
+            }
+          }
+          function filterData(data){
+            // filter all the nasties out
+            // no body tags
+            data = data.replace(/<?\/body[^>]*>/g,'');
+            // no linebreaks
+            data = data.replace(/[\r|\n]+/g,'');
+            // no comments
+            data = data.replace(/<--[\S\s]*?-->/g,'');
+            // no noscript blocks
+            data = data.replace(/<noscript[^>]*>[\S\s]*?<\/noscript>/g,'');
+            // no script blocks
+            data = data.replace(/<script[^>]*>[\S\s]*?<\/script>/g,'');
+            // no self closing scripts
+            data = data.replace(/<script.*\/>/,'');
+            // [... add as needed ...]
+            return data;
+          }
+
+        function checkValue(value, title, container) {
+          if(value == 0) { $(container).addClass('rain0'); $(title, container).html('no rain'); }
+          else if(value <= 0.25) { $(container).addClass('rain1'); $(title, container).html('very light rain'); }
+          else if(value <= 1) { $(container).addClass('rain2'); $(title, container).html('light rain'); }
+          else if(value <= 4) { $(container).addClass('rain3'); $(title, container).html('moderate rain'); }
+          else if(value <= 16) { $(container).addClass('rain4'); $(title, container).html('heavy rain'); }
+          else if(value <= 50) { $(container).addClass('rain5'); $(title, container).html('very heavy rain'); }
+          else if(value > 50) { $(container).addClass('rain6'); $(title, container).html('violent rain'); }
+        }
+
+        function beaufity(container) {
+
+            var forecast = $("#forecast"),
+                value1 = 0,
+                value2 = 0,
+                value3 = 0,
+                value4 = 0;
+
+            value1 = parseInt($("tr:nth-child(3) td:nth-child(2) p", container).html())+
+                    parseInt($("tr:nth-child(4) td:nth-child(2) p", container).html())+
+                    parseInt($("tr:nth-child(5) td:nth-child(2) p", container).html())+
+                    parseInt($("tr:nth-child(6) td:nth-child(2) p", container).html())+
+                    parseInt($("tr:nth-child(7) td:nth-child(2) p", container).html())+
+                    parseInt($("tr:nth-child(8) td:nth-child(2) p", container).html());
+            value1 /= 6;
+            checkValue(value1, '.title', $(".card:nth-child(1)"));
+            
+                    
+            value2 = parseInt($("tr:nth-child(9) td:nth-child(2) p", container).html())+
+                    parseInt($("tr:nth-child(10) td:nth-child(2) p", container).html())+
+                    parseInt($("tr:nth-child(11) td:nth-child(2) p", container).html())+
+                    parseInt($("tr:nth-child(12) td:nth-child(2) p", container).html())+
+                    parseInt($("tr:nth-child(13) td:nth-child(2) p", container).html())+
+                    parseInt($("tr:nth-child(14) td:nth-child(2) p", container).html());
+            value2 /= 6;
+            checkValue(value2, '.title', $(".card:nth-child(2)"));
+
+
+            value3 = parseInt($("tr:nth-child(15) td:nth-child(2) p", container).html())+
+                    parseInt($("tr:nth-child(16) td:nth-child(2) p", container).html())+
+                    parseInt($("tr:nth-child(17) td:nth-child(2) p", container).html())+
+                    parseInt($("tr:nth-child(18) td:nth-child(2) p", container).html())+
+                    parseInt($("tr:nth-child(19) td:nth-child(2) p", container).html())+
+                    parseInt($("tr:nth-child(20) td:nth-child(2) p", container).html());
+            value3 /= 6;
+            checkValue(value3, '.title', $(".card:nth-child(3)"));
+
+
+            value4 = parseInt($("tr:nth-child(21) td:nth-child(2) p", container).html())+
+                    parseInt($("tr:nth-child(22) td:nth-child(2) p", container).html())+
+                    parseInt($("tr:nth-child(23) td:nth-child(2) p", container).html())+
+                    parseInt($("tr:nth-child(24) td:nth-child(2) p", container).html())+
+                    parseInt($("tr:nth-child(25) td:nth-child(2) p", container).html());
+            value4 /= 5
+            checkValue(value4, '.title', $(".card:nth-child(4)"));
+
+            value = Math.max( value1, value2, value3, value4 );
+            checkValue(value, ".forecast", $("body"));
+  
+            $('#msg').hide();
+
+            $(window).resize(function(){
+              var body = $("#body");
+              $(body).css("top", ( $(window).height() - $(body).height() ) / 2 - $("#footer").height() );
+            })
+
+            $('body').addClass('ready');
+            $(window).resize();
+
+
+            setInterval(refresh, 600000);
+        }
+
+        function refresh(){
+          doAjax("http://xyrah.sytes.net/rain.php",$("#msg"),$("#raw"));
+        }
+        refresh();
+
+        $("#refresh").click(function(e){
+          e.preventDefault();
+          refresh();
+        });
+
+
+
+        });
+    </script>
+
+    <script>
+      //google analytics
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-16398396-1']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+          var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+          ga.src = ('https: ' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+          var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+  </body>
+</html>
+​
