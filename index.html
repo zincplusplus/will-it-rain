@@ -125,6 +125,8 @@
           }
 
         function checkValue(value, title, container) {
+          $(container).removeClass('rain0 rain1 rain2 rain3 rain4 rain5 rain6');//remove rain classes
+
           if(value == 0) { $(container).addClass('rain0'); $(title, container).html('no rain'); }
           else if(value <= 0.25) { $(container).addClass('rain1'); $(title, container).html('very light rain'); }
           else if(value <= 1) { $(container).addClass('rain2'); $(title, container).html('light rain'); }
