@@ -28,21 +28,42 @@
 		</head>
 		<body>
 			<header>
-				<h1>Amsterdam</h1>
+				<h1 id="city"></h1>
 			</header>
 			<ul id="forecast"></ul>
 			<div id="raw" style="display: none"></div>       
-			<div id="msg"></div>
+			<div id="msg" class="row detailes"></div>
 			<footer class="light">
-				<div class="row">2 hours rain forecast for <strong>Amsterdam</strong> by <a href="http://buienradar.nl/">Buienradar</a></div>
-				<div class="row"><a href="http://xyrah.sytes.net/rain.php">http://xyrah.sytes.net/rain.php</a></div>
-				<div id="forecastSource" class="row"></div>
+				<div class="row detailes">2 hour rain forecast provided by <a href="http://buienradar.nl/">Buienradar</a></div>
+				<div class="row detailes"><a href="http://xyrah.sytes.net/rain.php">http://xyrah.sytes.net/rain.php</a></div>
+				<div id="forecastSource" class="row detailes"></div>
 			</footer>
 
 
 		<script>
 				$(function() {
-						
+
+						function getCurrentCity( position ){
+							$.ajax({
+							  url: "getCurrentCity.php?lat=" + position.coords.latitude + "&lon=" + position.coords.longitude,
+							  dataType: 'json',
+							  success: function( data ){
+							  	if(data){
+
+								  	$(data.results[0].address_components).each( function() {
+								  		if( this.types.indexOf("locality") >=0)
+								  			$("#city").html( this.short_name );
+								  		if(this.types.indexOf("country") >=0 )
+								  			$("#city").html( $("#city").html() + ", " + this.short_name);
+								  	});
+
+							  	} else {
+							  		$("#msg").html("Could not determine position");
+							  	}
+							  }
+							});
+
+						}
 						function doAjax(url,msg,container){
 						// if the URL starts with http
 						if(url.match('^http')){
@@ -143,7 +164,14 @@
 				}
 
 				function refresh(){
-					doAjax("http://gps.buienradar.nl/getrr.php?lat=52.373056&lon=4.892222",$("#msg"),$("#raw"));
+					//get current position
+					navigator.geolocation.getCurrentPosition( function ( position ) {
+					    getCurrentCity( position );
+					    doAjax("http://gps.buienradar.nl/getrr.php?lat="+ position.coords.latitude +"&lon="+ position.coords.longitude,$("#msg"),$("#raw"));
+					},
+					function ( error ) {
+					    $("#msg").html("Could not get GPS position");
+					} );
 				}
 				refresh();
 
