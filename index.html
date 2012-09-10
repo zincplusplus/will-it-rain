@@ -31,10 +31,14 @@
 				<h1>Amsterdam</h1>
 			</header>
 			<ul id="forecast"></ul>
-			<footer style="display: none" class="row light">2 hours rain forecast for <strong>Amsterdam</strong>.</footer>
+			<div id="raw" style="display: none"></div>       
+			<div id="msg"></div>
+			<footer class="light">
+				<div class="row">2 hours rain forecast for <strong>Amsterdam</strong> by <a href="http://buienradar.nl/">Buienradar</a></div>
+				<div class="row"><a href="http://xyrah.sytes.net/rain.php">http://xyrah.sytes.net/rain.php</a></div>
+				<div id="forecastSource" class="row"></div>
+			</footer>
 
-		<div id="raw" style="display: none"></div>       
-		<div id="msg"></div>
 
 		<script>
 				$(function() {
@@ -110,27 +114,31 @@
 					forecastSource.splice(0,2); //remove past prediction
 
 					$(forecastSource).each(function(i){
-						
 						var length = this.length;
 						var amount255 = parseInt( this.substr(0, this.indexOf('|')) );
 							if(amount255) {
-								var ammount = Math.pow(10, (  - 109 ) / 32) ;
+								var ammount = Math.pow(10, ( amount255 - 109 ) / 32); // formula provided by forecast distributor
 
-								ammount = Math.round( ammount * 100 ) / 100;
+								ammount = Math.round( ammount * 10000 ) / 10000; //get the first 4 decimals
 							}
 							else
 								var ammount = 0;
 
-						if(!i)
-							var time = "Now";
-						else
-							var time = this.substr( this.indexOf('|')+1 );
+						var time = this.substr( this.indexOf('|')+1 );
 
 
-						$('<li class="row"><span class="forecast strong">'+ checkValue(ammount) +'</span>&nbsp;<span class="ammount light">'+ (ammount?ammount+'mm':'') +'</span><span class="time strong">'+ time +'</span></li>').appendTo("#forecast");
+						$('<li class="row">\
+								<div class="detailes">\
+									<span class="forecast strong">'+ checkValue(ammount) +'</span>\
+									&nbsp;\
+									<span class="ammount light">'+ (ammount?ammount+'mm':'') +'</span>\
+									<span class="time strong">'+ time +'</span>\
+								</div>\
+								<div class="graphic-ammount" style="width: '+ Math.min(amount255/2.55,100) +'%"></div>\
+							</li>').appendTo("#forecast");
 					});
 
-					$('footer').show();
+					$("#forecastSource").html( String(forecastSource) );
 					setInterval(refresh, 300000);
 				}
 

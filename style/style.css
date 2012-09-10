@@ -39,13 +39,27 @@ strong {
 header,
 .row {
 	line-height: 44px;
+	position: relative;
 }
 /* --------------------------------------------------------------------------------
  * Style
  * ----------------------------------------------------------------------------- */
-.row {
+.row .detailes,
+footer .row {
+	box-shadow: 0 -1px 0 0 rgba(0,0,0,.11) inset;
 	height: 44px;
 	padding: 0 11px;
+	position: relative;
+	z-index: 2;
+}
+
+.row .graphic-ammount {
+	background: #E2F8F6;
+	height: 100%;
+	left: 0;
+	position: absolute;
+	top: 0;
+	width: 100%;
 }
 
 header {
@@ -58,6 +72,7 @@ header {
 		position: fixed;
 		top: 0;
 		width: 100%;
+		z-index: 999;
 }
 h1 {
 	color: white;
@@ -68,8 +83,8 @@ h1 {
 ul {
 	margin-top: 44px;
 }
-li {
-	box-shadow: 0 -1px 0 0 rgba(0,0,0,.11) inset;
+li,
+footer .row {
 	font-size: 20px;
 	overflow: hidden;
 }
@@ -81,6 +96,15 @@ li .time {
 }
 
 footer {
-	font-size: 12px;
 	margin-bottom: -44px;
+	overflow: hidden;
+	width: 100%;
+}
+footer .row {
+	font-size: 12px;
+}
+#forecastSource {
+	word-break: break-all;
+	height: auto;
+
 }
