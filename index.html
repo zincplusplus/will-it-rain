@@ -30,8 +30,7 @@
 			<header>
 				<h1 id="city"></h1>
 			</header>
-			<ul id="forecast"></ul>
-			<div id="raw" style="display: none"></div>       
+			<ul id="forecast"></ul>     
 			<div id="msg" class="row detailes"></div>
 			<footer class="light">
 				<div class="row detailes">2 hour rain forecast provided by <a href="http://buienradar.nl/">Buienradar</a></div>
@@ -62,63 +61,31 @@
 							  	}
 							  }
 							});
-
 						}
-						function doAjax(url,msg,container){
-						// if the URL starts with http
-						if(url.match('^http')){
-							// assemble the YQL call
-							msg.removeClass('error');
-							//msg.html(' (loading...)');
 
+						function getForecast(position){
 							$.ajax({
-								url: "http://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20html%20where%20url%3D%22"+encodeURIComponent(url)+"%22&format=xml'&callback=?",
-								contentType: "application/json; charset=utf-8",
-    							dataType: "json",
-								success: function(data){
-									if(data.results[0]){
-										
-										forecastString = String( data.results[0].match( /<p>(.+?)</g ) );
-										forecastString = forecastString.substr(3,forecastString.length-4);//get rid of the remaining parts of the <p> parent
+							  url: "getForecast.php?lat=" + position.coords.latitude + "&lon=" + position.coords.longitude,
+							  dataType: 'text',
+							  success: function( data ){
 
-										console.log(forecastString);
+								if(data){
+									
+									//msg.html(' (ready.)');
+									beaufity( $.trim(data).split(/\s+/g) );
 
-										//msg.html(' (ready.)');
-										beaufity( forecastString.split(/\s+/g) );
-
-									} else {
-										msg.html(' (error!)');
-										msg.addClass('error');
-										var errormsg = '<p>Error: could not load the page.</p>';
-										console.log(errormsg);
-									}
-								}
-							});
-						} else {
-							$.ajax({
-								url: url,
-								timeout: 5000,
-								success: function(data){
-									msg.html(' (ready.)');
-									container.
-										html(data);
-									beaufity(container);
-								},
-								error: function(req,error){
+								} else {
 									msg.html(' (error!)');
 									msg.addClass('error');
-									if(error === 'error'){error = req.statusText;}
-									var errormsg = 'There was a communication error: '+error;
-										container.
-											html(errormsg);
-								},
-								beforeSend: function(data){
-									msg.removeClass('error');
-									msg.html(' (loading...)');
+									var errormsg = '<p>Error: could not load the page.</p>';
+									console.log(errormsg);
 								}
+							  },
+							  complete: function(data) {
+							  	console.log(data);
+							  }
 							});
 						}
-					}
 
 				function checkValue(value) {
 					if(value == 0) { 		 return 'no rain'; }
@@ -167,7 +134,7 @@
 					//get current position
 					navigator.geolocation.getCurrentPosition( function ( position ) {
 					    getCurrentCity( position );
-					    doAjax("http://gps.buienradar.nl/getrr.php?lat="+ position.coords.latitude +"&lon="+ position.coords.longitude,$("#msg"),$("#raw"));
+					    getForecast(position);
 					},
 					function ( error ) {
 					    $("#msg").html("Could not get GPS position");

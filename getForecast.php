@@ -1,0 +1,1 @@
+<?php print_r( file_get_contents( "http://gps.buienradar.nl/getrr.php?lat=" . $_GET["lat"] . "&lon" . $_GET["lon"] ) ); ?>
