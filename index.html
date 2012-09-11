@@ -122,7 +122,7 @@
 									<span class="ammount light">'+ (ammount?ammount+'mm':'') +'</span>\
 									<span class="time strong">'+ time +'</span>\
 								</div>\
-								<div class="graphic-ammount" style="width: '+ Math.min(amount255/2.55,100) +'%"></div>\
+								<div class="graphic-ammount" style="width: '+ Math.min(ammount / 25 * 100, 100) +'%"></div>\
 							</li>').appendTo("#forecast");
 					});
 
