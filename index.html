@@ -33,7 +33,7 @@
 			<ul id="forecast"></ul>     
 			<div id="msg" class="row detailes"></div>
 			<footer class="light">
-				<div class="row detailes">2 hour rain forecast provided by <a href="http://buienradar.nl/">Buienradar</a></div>
+				<div class="row detailes">2 hour rain forecast provided by <a id="source" href="http://buienradar.nl/">Buienradar</a></div>
 				<div class="row detailes"><a href="http://xyrah.sytes.net/rain.php">http://xyrah.sytes.net/rain.php</a></div>
 				<div id="forecastSource" class="row detailes"></div>
 			</footer>
@@ -133,6 +133,9 @@
 				function refresh(){
 					//get current position
 					navigator.geolocation.getCurrentPosition( function ( position ) {
+
+						console.log( position );
+
 					    getCurrentCity( position );
 					    getForecast(position);
 					},
