@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+		<head>
+				<title>Rain</title>
+				<meta charset='UTF-8' />
+				<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+				<meta name="apple-mobile-web-app-capable" content="yes" />
+
+				<link rel="shortcut icon" href="favicon.png" type="image/png" />
+				<link rel="icon" href="favicon.png" type="image/png" />
+				<link rel="apple-touch-icon" href="favicon.png" />
+
+				<link rel="stylesheet" href="style/add2home.css">
+				<link rel="stylesheet" href="style/style.css">
+				<script type="text/javascript">
+				var addToHomeConfig = {
+					animationIn: 'bubble',
+					animationOut: 'drop',
+					lifespan:10000,
+					expire:2,
+					touchIcon:true
+				};
+				</script>
+				<script type="application/javascript" src="code/add2home.js"></script>
+			 
+				<script src='prefixfree.min.js'></script>
+				<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+				<script type="text/javascript" src="/code/jquery.tablesorter/jquery.tablesorter.js"></script> 
+		</head>
+		<body>
+			<header>
+				<h1 id="city"></h1>
+			</header>
+			<table id="forecastTable" width="100%" class="tablesorter" style="margin-top: 44px; text-align: left">
+				<thead>
+					<th>Forecast</th>
+					<th>Ammount</th>
+					<th>Req Time</th>
+					<th>Time</th>
+				</thead>
+				<tbody id="forecast" ></tbody>
+			</table>
+			<div id="msg" class="row detailes"></div>
+			<footer class="light">
+				<div class="row detailes">2 hour rain forecast provided by <a id="source" href="http://buienradar.nl/">Buienradar</a></div>
+				<div class="row detailes"><a href="http://xyrah.sytes.net/rain.php">http://xyrah.sytes.net/rain.php</a></div>
+				<div id="forecastSource" class="row detailes"></div>
+			</footer>
+
+		<script>
+				$(function() {
+						function getForecast(position){
+							$.ajax({
+							  url: "getForecast.php?lat=" + position.coords.latitude + "&lon=" + position.coords.longitude,
+							  dataType: 'text',
+							  success: function( data ){
+
+								if(data){
+									
+									//msg.html(' (ready.)');
+									beaufity( $.trim(data).split(/\s+/g) );
+
+								} else {
+									msg.html(' (error!)');
+									msg.addClass('error');
+									var errormsg = '<p>Error: could not load the page.</p>';
+									console.log(errormsg);
+								}
+							  },
+							  complete: function(data) {
+							  	console.log(data);
+							  }
+							});
+						}
+
+				function checkValue(value) {
+					if(value == 0) { 		 return 'no rain'; }
+					else if(value <= 0.25) { return 'light rain'; }
+					else if(value <= 10) {   return 'moderate rain'; }
+					else if(value <= 50) {   return 'heavy rain'; }
+					else if(value > 50) {    return 'violent rain'; }
+				}
+
+				function beaufity( forecastSource ) {
+					
+					$('#msg').hide();
+
+					//forecastSource.splice(0,2); //remove past prediction
+
+					$(forecastSource).each(function(i){
+						var length = this.length;
+						var amount255 = parseInt( this.substr(0, this.indexOf('|')) );
+							if(amount255) {
+								var ammount = Math.pow(10, ( amount255 - 109 ) / 32); // formula provided by forecast distributor
+
+								ammount = Math.round( ammount * 10000 ) / 10000; //get the first 4 decimals
+							}
+							else
+								var ammount = 0;
+
+						var time = this.substr( this.indexOf('|')+1 );
+
+						var date = new Date;
+						var minutes = date.getMinutes();
+						if(minutes<10)
+							minutes = '0' + minutes;
+						var hour = date.getHours();
+
+
+						$('<tr class="row">\
+							<td class="forecast strong fleft">'+ checkValue(ammount) +'</td	>\
+							<td class="ammount light fleft">'+ (ammount?ammount+'mm':'') +'</td>\
+							<td class="request-time light fleft">'+ hour + ":" + minutes +'</td>\
+							<td class="time strong">'+ time +'</td>\
+						</tr>').appendTo("#forecast");
+					});
+					$("#forecastSource").html( String(forecastSource) );
+
+					$("#forecastTable").tablesorter();
+
+					console.log($("table"));
+
+					setInterval(refresh, 300000);
+				}
+
+				function refresh(){
+					//get current position
+					navigator.geolocation.getCurrentPosition( function ( position ) {
+					    getForecast(position);
+					},
+					function ( error ) {
+					    $("#msg").html("Could not get GPS position");
+					} );
+				}
+				refresh();
+				setInterval(refresh, 60000);
+
+				});
+		</script>
+
+		<script>
+			//google analytics
+			var _gaq = _gaq || [];
+			_gaq.push(['_setAccount', 'UA-16398396-1']);
+			_gaq.push(['_trackPageview']);
+
+			(function() {
+					var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+					ga.src = ('https: ' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+					var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+			})();
+		</script>
+	</body>
+</html>
+​
