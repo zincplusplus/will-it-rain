@@ -81,9 +81,6 @@
 									var errormsg = '<p>Error: could not load the page.</p>';
 									console.log(errormsg);
 								}
-							  },
-							  complete: function(data) {
-							  	console.log(data);
 							  }
 							});
 						}
@@ -136,8 +133,6 @@
 
 					//get current position
 					navigator.geolocation.getCurrentPosition( function ( position ) {
-
-						console.log( position );
 
 					    getCurrentCity( position );
 					    getForecast(position);
