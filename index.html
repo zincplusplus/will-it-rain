@@ -29,6 +29,7 @@
 		<body>
 			<header>
 				<h1 id="city"></h1>
+				<a id="refresh" href="#" class="button">Refresh</a>
 			</header>
 			<ul id="forecast"></ul>     
 			<div id="msg" class="row detailes"></div>
@@ -98,6 +99,7 @@
 				function beaufity( forecastSource ) {
 					
 					$('#msg').hide();
+					//$('#forecast').html("");
 
 					forecastSource.splice(0,2); //remove past prediction
 
@@ -131,6 +133,7 @@
 				}
 
 				function refresh(){
+
 					//get current position
 					navigator.geolocation.getCurrentPosition( function ( position ) {
 
@@ -144,6 +147,13 @@
 					} );
 				}
 				refresh();
+
+				$("#refresh").click( function(e){
+					e.preventDefault();
+					e.stopPropagation();
+
+					refresh();
+				} );
 
 				});
 		</script>
