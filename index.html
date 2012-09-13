@@ -5,6 +5,7 @@
 				<meta charset='UTF-8' />
 				<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
 				<meta name="apple-mobile-web-app-capable" content="yes" />
+				<meta name="apple-mobile-web-app-status-bar-style" content="black" /> 
 
 				<link rel="shortcut icon" href="favicon.png" type="image/png" />
 				<link rel="icon" href="favicon.png" type="image/png" />
@@ -23,17 +24,23 @@
 				</script>
 				<script type="application/javascript" src="code/add2home.js"></script>
 			 
-				<script src='prefixfree.min.js'></script>
 				<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
 		</head>
 		<body>
 			<header>
+				<a id="refreshCity" href="#">
+					<img width="23" height="31" src="/images/refreshCity.png" alt="Location" />
+				</a>
 				<h1 id="city"></h1>
-				<a id="refresh" href="#" class="button">Refresh</a>
+				<a id="refreshForecast" href="#" class="button">
+					<img width="22" height="22" src="/images/refreshForecast.png" alt="forecast" />
+				</a>
 			</header>
-			<ul id="forecast"></ul>     
-			<div id="msg" class="row detailes"></div>
-			<footer class="light">
+			<div id="body">
+				<div id="msg"></div>
+				<ul id="forecast"></ul>     
+			</div>
+			<footer class="light" style="display: none">
 				<div class="row detailes">2 hour rain forecast provided by <a id="source" href="http://buienradar.nl/">Buienradar</a></div>
 				<div class="row detailes"><a href="http://xyrah.sytes.net/rain.php">http://xyrah.sytes.net/rain.php</a></div>
 				<div id="forecastSource" class="row detailes"></div>
@@ -41,120 +48,199 @@
 
 
 		<script>
-				$(function() {
+				
+			var rainAppCache = {};
 
-						function getCurrentCity( position ){
-							$.ajax({
-							  url: "getCurrentCity.php?lat=" + position.coords.latitude + "&lon=" + position.coords.longitude,
-							  dataType: 'json',
-							  success: function( data ){
-							  	if(data){
+			$(function(){
+				/* ------------------------------------------------------------------------------------------
+				 * Logic
+				 ----
+				 * Check localStorage data integrity
+					* rainAppCache
+						* coords
+							longitude
+							latitude
+						* city
+						* timestamp
 
-								  	$(data.results[0].address_components).each( function() {
-								  		if( this.types.indexOf("locality") >=0)
-								  			$("#city").html( this.short_name );
-								  		if(this.types.indexOf("country") >=0 )
-								  			$("#city").html( $("#city").html() + ", " + this.short_name);
-								  	});
+				 * If data is OK
+					* get forecast for current GPS data
+				 * Else
+					* Remove corupted data
+					* Get new GPS Coordinates
+					* Get current city name
+					* Cache new info in localStorage
 
-							  	} else {
-							  		$("#msg").html("Could not determine position");
-							  	}
-							  }
-							});
+				* Get current forecast
+				* Empty current forecast list
+				* Interpret current forecast data
+				* Create new forecast list
+				* Display current city name
+				* Show footer
+				 * --------------------------------------------------------------------------------------- */
+				
+				function getStoredData() {
+					var rainAppCache = localStorage.getItem('rainAppCache');
+					if (rainAppCache) { //if local storage exists
+						rainAppCache = JSON.parse( rainAppCache );
+
+						if( rainAppCache.coords && rainAppCache.city && rainAppCache.timestamp ) { //check level 1 objects
+							if( rainAppCache.coords.latitude && rainAppCache.coords.longitude && rainAppCache.city.length && parseInt(rainAppCache.timestamp) === rainAppCache.timestamp && rainAppCache.timestamp > 0 ) { //check leve 2 objects and integrity
+								
+								getForecast( rainAppCache );
+							} else {
+								getNewData();
+							}
+						} else {
+							getNewData();
 						}
+					} else {
+						getNewData();
+					}
+				}
 
-						function getForecast(position){
+				function getNewData() {
+					localStorage.removeItem("rainAppCache");//remove corupted data if it exists
+
+					navigator.geolocation.getCurrentPosition(//get current GPS coordinates
+						function ( position ) {
+							rainAppCache.coords = position.coords;
+							rainAppCache.timestamp = new Date().getTime();
+
 							$.ajax({
-							  url: "getForecast.php?lat=" + position.coords.latitude + "&lon=" + position.coords.longitude,
-							  dataType: 'text',
-							  success: function( data ){
+								url: "getCurrentCity.php?lat=" + position.coords.latitude + "&lon=" + position.coords.longitude,
+								dataType: 'json',
+								success: function (data) {
+									if(data) {
+										//Figure out the name of the City and Country initials
+										$(data.results[0].address_components).each( function() {
+											if (this.types.indexOf("locality") >= 0)
+												rainAppCache.city = this.short_name;
 
-								if(data){
-									
-									//msg.html(' (ready.)');
-									beaufity( $.trim(data).split(/\s+/g) );
+											if (this.types.indexOf("country") >= 0)
+												rainAppCache.city = rainAppCache.city + ", " + this.short_name;
+										});
 
-								} else {
-									msg.html(' (error!)');
-									msg.addClass('error');
-									var errormsg = '<p>Error: could not load the page.</p>';
-									console.log(errormsg);
+										localStorage.setItem( "rainAppCache", JSON.stringify(rainAppCache) );
+										getForecast( rainAppCache );
+
+									} else {
+										$("#msg")
+											.html("Could not get GPS position. Please try again later.")
+											.addClass("error");		
+										
+										console.log("Got Google data but data is undefined");
+									}
+								},
+								error: function() {
+									$("#msg")
+										.html("Could not get GPS position. Please try again later.")
+										.addClass("error");
+									console.log("Could not get Google data");
 								}
-							  }
 							});
+						},
+
+						function ( error ) {
+							$("#msg")
+								.html("Could not get GPS position. Please try again later.")
+								.addClass("error");
 						}
+					);
+					
+				}
 
 				function checkValue(value) {
-					if(value == 0) { 		 return 'no rain'; }
-					else if(value <= 0.25) { return 'light rain'; }
-					else if(value <= 10) {   return 'moderate rain'; }
-					else if(value <= 50) {   return 'heavy rain'; }
-					else if(value > 50) {    return 'violent rain'; }
+					if (value == 0) {
+						return 'no rain';
+					} else if (value <= 0.25) {
+						return 'light rain';
+					} else if (value <= 10) {
+						return 'moderate rain';
+					} else if (value <= 50) {
+						return 'heavy rain';
+					} else if (value > 50) {
+						return 'violent rain';
+					}
 				}
 
-				function beaufity( forecastSource ) {
+				function getForecast( rainAppCache ) {
 					
-					$('#msg').hide();
-					$('#forecast').html("");
+					$("#city").html( rainAppCache.city );
+					$.ajax({
+						url: "getForecast.php?lat=" + rainAppCache.coords.latitude + "&lon=" + rainAppCache.coords.longitude,
+						dataType: 'text',
+						success: function (data) {
 
-					forecastSource.splice(0,2); //remove past prediction
+							if (data) {
+								$("#forecast").html("");
 
-					$(forecastSource).each(function(i){
-						var length = this.length;
-						var amount255 = parseInt( this.substr(0, this.indexOf('|')) );
-							if(amount255) {
-								var ammount = Math.pow(10, ( amount255 - 109 ) / 32); // formula provided by forecast distributor
+								var forecastSource = $.trim(data).split(/\s+/g);//trim whitespace around data
+								forecastSource.splice(0, 2); //remove past predictions
 
-								ammount = Math.round( ammount * 1000 ) / 1000; //get the first 4 decimals
+								$(forecastSource).each(function (i) {
+									var length = this.length;
+									var amount255 = parseInt(this.substr(0, this.indexOf('|')));
+									if (amount255) {
+										var ammount = Math.pow(10, (amount255 - 109) / 32); // formula provided by forecast distributor
+
+										ammount = Math.round(ammount * 1000) / 1000; //get the first 4 decimals
+									} else var ammount = 0;
+
+									var time = this.substr(this.indexOf('|') + 1);
+
+									forecastValue = checkValue(ammount);
+									$('<li class="row ' + forecastValue.replace(/ /g, "-") + '">\
+										<div class="detailes">\
+											<span class="forecast strong">' + forecastValue + '</span>\
+											<span class="ammount light">' + (ammount ? ammount + 'mm' : '') + '</span>\
+											<span class="time strong">' + time + '</span>\
+										</div>\
+										<div class="graphic-ammount" style="width: ' + Math.min(ammount / 25 * 100, 100) + '%"></div>\
+									</li>').appendTo("#forecast");
+								});
+
+							} else {
+								$("#msg")
+									.html("Could not get Forecast data. Please try again later.")
+									.addClass("error");
 							}
-							else
-								var ammount = 0;
-
-						var time = this.substr( this.indexOf('|')+1 );
-
-
-						$('<li class="row">\
-								<div class="detailes">\
-									<span class="forecast strong">'+ checkValue(ammount) +'</span>\
-									&nbsp;\
-									<span class="ammount light">'+ (ammount?ammount+'mm':'') +'</span>\
-									<span class="time strong">'+ time +'</span>\
-								</div>\
-								<div class="graphic-ammount" style="width: '+ Math.min(ammount / 25 * 100, 100) +'%"></div>\
-							</li>').appendTo("#forecast");
-					});
-
-					$("#forecastSource").html( String(forecastSource) );
-					setInterval(refresh, 300000);
+						}
+					});	
 				}
+				
+				if(localStorage.getItem('rainAppCache'))
+					getStoredData();
+				else
+					getNewData();
 
-				function refresh(){
-
-					//get current position
-					navigator.geolocation.getCurrentPosition( function ( position ) {
-
-					    getCurrentCity( position );
-					    getForecast(position);
-					},
-					function ( error ) {
-					    $("#msg").html("Could not get GPS position");
-					} );
-				}
-				refresh();
-
-				$("#refresh").click( function(e){
+				$("#refreshCity").click(function(e) {
 					e.preventDefault();
-					e.stopPropagation();
 
-					refresh();
-				} );
+					getNewData();
 
+					$(this).addClass("touched");
+					setTimeout(function(){
+						$("#refreshCity").removeClass("touched")
+					}, 100);
 				});
-		</script>
 
-		<script>
-			//google analytics
+				$("#refreshForecast").click(function(e) {
+					e.preventDefault();
+
+					getNewData();
+					$(this).addClass("touched");
+					setTimeout(function(){
+						$("#refreshForecast").removeClass("touched")
+					}, 100);
+				});
+			});
+
+			
+		
+			/* ------------------------------------------------------------------------------------------
+			 * Google Analytics
+			 * --------------------------------------------------------------------------------------- */
 			var _gaq = _gaq || [];
 			_gaq.push(['_setAccount', 'UA-16398396-1']);
 			_gaq.push(['_trackPageview']);

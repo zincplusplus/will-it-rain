@@ -11,12 +11,21 @@ img {
 a {
 	text-decoration: none;
 }
+html, body {
+	min-height: 100%;
+}
 /* --------------------------------------------------------------------------------
  * Tools
  * ----------------------------------------------------------------------------- */
 .fbox {
 	overflow: hidden;
 	zoom: 1;
+}
+.fleft {
+	float: left;
+}
+.fright {
+	float: right;
 }
 /* --------------------------------------------------------------------------------
  * Typography
@@ -28,19 +37,62 @@ body,
 strong {
 	font-family: "Helvetica Neue", Arial, sans-serif;
 }
+/* --------------------------------------------------------------------------------
+ * Style
+ * ----------------------------------------------------------------------------- */
+#body {
+	margin-top: 44px;
+}
+
+
+
+
+
+
+
+
+
+
+
 .strong {
-	color: black;
 	font-weight: bold;
 }
 .light {
-	color: #7F7F7F;
-	font-family: "HelveticaNeue-Light"
+	font-family: "HelveticaNeue-Light";
+	font-size: 16px;
 }
 header,
 .row {
 	line-height: 44px;
 	position: relative;
 }
+a {
+	color: #45ADA8;
+}
+/* ------------------------------------------------------------------------------------------
+ * Colors
+ * --------------------------------------------------------------------------------------- */
+.no-rain,
+.time {
+	color: #ADCAC8;
+}
+
+.light-rain {
+	color: #0BA5AF;
+}
+
+.moderate-rain {
+	color: #00B579;
+}
+
+.heavy-rain {
+	color: #E85000;
+}
+
+.extreme-rain {
+	color: #BC0000;
+}
+
 /* --------------------------------------------------------------------------------
  * Style
  * ----------------------------------------------------------------------------- */
@@ -64,7 +116,7 @@ header,
 header {
 		background: #45ada8 -webkit-linear-gradient(top, #29BDB6, #00A199);
 		box-shadow: 
-			0 1px 0 0 rgba(255,255,255,.3) inset,
+			0 1px 0 0 rgba(255,255,255,.5) inset,
 			0 -1px 0 0 rgba(0,0,0,.3) inset,
 			0 5px 5px rgba(0,0,0,.2);
 		height: 44px;
@@ -81,24 +133,48 @@ h1 {
 }
 
 .button {
-	background-color: rgba(0,0,0,.1);
-	border-radius: 11px;
-	border: 1px solid rgba(0,0,0,.5);
+	background: rgba(0,0,0,.05);
+	border-radius: 5px;
 	box-shadow:
-		0 1px 1px rgba(255,255,255,.5),
-		inset 0 1px 2px rgba(0,0,0,.7);
+		inset 0 1px 0 rgba(255, 255, 255, .3),
+		0 0 0 1px rgba(0,0,0,0.3),
+		0 2px 0 rgba(255, 255, 255, .3);
+	text-shadow: 0 -1px 0 #378985;
+
 }
 
-#refresh {
+header a {
+	-webkit-tap-highlight-color: rgba(0,0,0,0);
+}
+header .button {
 	color: white;
 	font-size: 12px;
-	line-height: 30px;
-	padding: 0 10px;
+	height: 29px;
+	padding: 0 9px;
 	position: absolute;
-	right: 5px;	
 	top: 6px;
 }
-
+#refreshForecast {
+	right: 7px;	
+}
+#refreshCity {
+	display: block;
+	height: 31px;
+	left: 0;
+	padding: 5px 11px 6px 10px;
+	position: absolute;
+	top: 0;
+	width: 23px;
+}
+#refreshCity.touched {
+	background-color: rgba(0,0,0,.15);
+}
+#refreshForecast.touched {
+	background-color: rgba(0,0,0,.15);
+}
+#forecast {
+	background: white;
+}
 ul {
 	margin-top: 44px;
 }
@@ -115,6 +191,8 @@ li .time {
 }
 
 footer {
+	background: white;
+	color: #7F7F7F;
 	margin-bottom: -44px;
 	overflow: hidden;
 	width: 100%;
